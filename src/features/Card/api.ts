@@ -10,20 +10,26 @@ export const get = (req: RequestInfo | string) => async () => {
   const resp = await fetch(req)
   return await resp.json()
 }
+
+type SearchStr = unknown | undefined
+
 const SCRY_URL: string = 'https://api.scryfall.com/cards/'
 
 const multiCardResponseToNames = ({ data }: ScryfallMultiCardResponse) =>
   data.map((d: ScryfallCard) => d.name)
 
+const multiCardResponseToIds = ({ data }: ScryfallMultiCardResponse) =>
+  data.map((d: ScryfallCard) => d.id)
+
 export const CardApi = {
-  useRandom: (searchStr: string) =>
+  useRandom: (searchStr: SearchStr) =>
     useQuery({
       queryKey: ['random', searchStr],
       enabled: !!searchStr,
       queryFn: get(`${SCRY_URL}random?q=${searchStr}`),
       select: (c: ScryfallCard) => c,
     }),
-  useSearch: (searchStr: string) =>
+  useSearch: (searchStr: SearchStr) =>
     useQuery({
       queryKey: ['search', searchStr],
       enabled: !!searchStr,
@@ -31,7 +37,17 @@ export const CardApi = {
       queryFn: get(`${SCRY_URL}search?q=${searchStr}`),
       select: multiCardResponseToNames,
     }),
-  useAutocomplete: (searchStr: string, limit: number = 10) =>
+  // since useSearchAlso has the same key as useSearch, it will just freeload
+  // that data instead of making a new request
+  useSearchAlso: (searchStr: SearchStr) =>
+    useQuery({
+      queryKey: ['search', searchStr],
+      enabled: !!searchStr,
+      staleTime: 1000 * 60 * 10,
+      queryFn: get(`${SCRY_URL}search?q=${searchStr}`),
+      select: multiCardResponseToIds,
+    }),
+  useAutocomplete: (searchStr: SearchStr, limit: number = 10) =>
     useQuery({
       queryKey: ['autocomplete', searchStr],
       enabled: !!searchStr,

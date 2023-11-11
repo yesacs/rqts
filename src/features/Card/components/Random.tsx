@@ -1,5 +1,6 @@
 import { useForm, SubmitHandler } from 'react-hook-form'
-import { useDebouncedState } from '@/hooks'
+import { useDebouncedState, useQueryParams } from '@/hooks/util'
+
 import CardApi from '../api'
 
 interface ICardInput {
@@ -9,41 +10,45 @@ interface ICardInput {
 }
 
 export function RandomCard() {
-  const PATTERN = {
-    phone: /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/,
-  }
+  const
+    [{ cardNameFromUri = '' }, setQueryParams] = useQueryParams(),
+    [cardInput = '', setCardInput, cardName = ''] = useDebouncedState(cardNameFromUri)
 
-  const [cardInput, setCardInput, query] = useDebouncedState('sol ring'),
-    { data: cards } = CardApi.useSearch(query),
-    { data: random } = CardApi.useRandom(query),
-    { data: autocomplete = [] } = CardApi.useAutocomplete(query)
+  const
+    { data: random } = CardApi.useRandom(cardName),
+    { data: cards = [] } = CardApi.useSearch(cardName),
+    { data: cardsAlso = [] } = CardApi.useSearchAlso(cardName),
+    { data: autocomplete = [] } = CardApi.useAutocomplete(cardName)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ICardInput>()
-  const onSubmit: SubmitHandler<ICardInput> = data => console.log(data)
+  const
+    {
+      register,
+      handleSubmit,
+      formState: { errors },
+    } = useForm<ICardInput>(),
+    onSubmit: SubmitHandler<ICardInput> = data => {
+      setQueryParams({ cardName: String(cardInput) })
+      console.log(data)
+    }
 
-  console.log('!!!!!! results are in!', { cards, random, errors, autocomplete })
+  console.info({
+    cardName,
+    cards,
+    cardsAlso,
+    random,
+    errors,
+    autocomplete,
+  })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <h4>RANDOM CARD!!!</h4>
       <input
         {...register('cardName', { required: true })}
-        value={cardInput}
+        value={cardInput || ''}
         onChange={e => setCardInput(e.target.value)}
       />
-      <input
-        {...register('email', {
-          value: true,
-        })}
-      />
-      <input
-        {...register('phoneNumber', { required: true, pattern: PATTERN.phone })}
-      />
-      <button type="submit">GO</button>
+      <button type="submit">Add to URL</button>
       <br />
       <ul>
         {autocomplete.map(a => (
@@ -53,7 +58,7 @@ export function RandomCard() {
       <br />
       {random && (
         <a href={random?.uri}>
-          <img src={random?.image_uris?.normal} />
+          <img src={random?.image_uris?.normal} height="300px" />
         </a>
       )}
     </form>
