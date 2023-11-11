@@ -4,9 +4,15 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import RandomCard from './features/Card/Random'
+import RandomCard from './features/Card/components/Random'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      //staleTime: Infinity,
+    },
+  },
+})
 
 function App() {
   const [count, setCount] = useState(0)
