@@ -1,7 +1,9 @@
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { useDebouncedState, useQueryParams } from '@/hooks/util'
+import Card from './Card'
 
 import CardApi from '../api'
+import { ScryfallCard } from '../types'
 
 interface ICardInput {
   cardName: string
@@ -10,57 +12,46 @@ interface ICardInput {
 }
 
 export function RandomCard() {
-  const
-    [{ cardNameFromUri = '' }, setQueryParams] = useQueryParams(),
-    [cardInput = '', setCardInput, cardName = ''] = useDebouncedState(cardNameFromUri)
+  const [queryParams, setQueryParams] = useQueryParams(),
+    [cardInput = '', setCardInput, cardName = ''] = useDebouncedState(
+      queryParams.cardName
+    )
 
-  const
-    { data: random } = CardApi.useRandom(cardName),
+  const { data: random } = CardApi.useRandom(cardName),
     { data: cards = [] } = CardApi.useSearch(cardName),
-    { data: cardsAlso = [] } = CardApi.useSearchAlso(cardName),
-    { data: autocomplete = [] } = CardApi.useAutocomplete(cardName)
+    { data: results = [] } = CardApi.useAutocomplete(cardName)
 
-  const
-    {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm<ICardInput>(),
+  const { register, handleSubmit } = useForm<ICardInput>(),
     onSubmit: SubmitHandler<ICardInput> = data => {
       setQueryParams({ cardName: String(cardInput) })
       console.log(data)
     }
-
-  console.info({
-    cardName,
-    cards,
-    cardsAlso,
-    random,
-    errors,
-    autocomplete,
-  })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <h4>RANDOM CARD!!!</h4>
       <input
         {...register('cardName', { required: true })}
-        value={cardInput || ''}
+        value={String(cardInput)}
         onChange={e => setCardInput(e.target.value)}
       />
       <button type="submit">Add to URL</button>
       <br />
       <ul>
-        {autocomplete.map(a => (
-          <li key={a}>{a}</li>
+        {results.map((r: string) => (
+          <li key={r}>{r}</li>
+        ))}
+      </ul>
+      <ul>
+        {cards.map((card: ScryfallCard) => (
+          <li key={card.id} onClick={() => setQueryParams({ cardId: card.id })}>
+            {card.name}
+          </li>
         ))}
       </ul>
       <br />
-      {random && (
-        <a href={random?.uri}>
-          <img src={random?.image_uris?.normal} height="300px" />
-        </a>
-      )}
+      {queryParams.cardId && <Card id={queryParams.cardId} />}
+      {random && <Card id={random.id} />}
     </form>
   )
 }

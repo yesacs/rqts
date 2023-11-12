@@ -3,11 +3,15 @@ import { SetURLSearchParams, useSearchParams } from 'react-router-dom'
 
 // A custom version of useState that can debounce itself
 type StateValue = unknown | undefined
-
 export function useDebouncedState(
   value?: StateValue,
   delay: number = 500
-): [StateValue, React.Dispatch<React.SetStateAction<StateValue>>, StateValue, boolean] {
+): [
+  StateValue,
+  React.Dispatch<React.SetStateAction<StateValue>>,
+  StateValue,
+  boolean,
+] {
   const [internalValue, setInternalValue] = useState(value),
     [debouncedValue, setDebouncedValue] = useState(value)
 
@@ -24,21 +28,19 @@ export function useDebouncedState(
   ]
 }
 
+// a wrapper around the React-Router useSearchParams hook that returns the query params mapped and filtered by a given namespace
 type MappedQueryParam = {
-  [key: string]: string,
+  [key: string]: string
 }
-
-export function useQueryParams(namespace?: string): [MappedQueryParam, SetURLSearchParams] {
+export function useQueryParams(
+  namespace?: string
+): [MappedQueryParam, SetURLSearchParams] {
   const [rawSearchParams, setQueryParams] = useSearchParams(),
     queryParams: MappedQueryParam = {}
 
   rawSearchParams.forEach((value, name) => {
-    if (!namespace || name.includes(namespace))
-      queryParams[name] = value
+    if (!namespace || name.includes(namespace)) queryParams[name] = value
   })
 
-  console.log(rawSearchParams, queryParams)
-
   return [queryParams, setQueryParams]
-
 }

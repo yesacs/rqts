@@ -6,6 +6,7 @@ export type ScryfallCard = {
     normal: string
   }
   uri: string
+  time?: string
 }
 
 export type ScryfallCatalog = {
