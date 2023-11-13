@@ -13,12 +13,13 @@ interface ICardInput {
 
 export function RandomCard() {
   const [queryParams, setQueryParams] = useQueryParams(),
-    [cardInput = '', setCardInput, cardName = '', , setCardInputNow] =
-      useDebouncedState(queryParams.cardName)
+    [cardInput = '', setCardInput, cardName = ''] = useDebouncedState(
+      queryParams.cardName
+    )
 
-  const { data: random } = CardApi.useRandom(cardName),
-    { data: cards = [] } = CardApi.useSearch(cardName),
-    { data: results = [] } = CardApi.useAutocomplete(cardName)
+  const { data: random } = CardApi.useRandom(String(cardName)),
+    { data: cards = [] } = CardApi.useSearch(String(cardName)),
+    { data: results = [] } = CardApi.useAutocomplete(String(cardName))
 
   const { register, handleSubmit } = useForm<ICardInput>(),
     onSubmit: SubmitHandler<ICardInput> = data => {
@@ -27,17 +28,27 @@ export function RandomCard() {
     }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form
+      onSubmit={() => {
+        handleSubmit(onSubmit)
+      }}
+    >
       <h4>RANDOM CARD!!!</h4>
       <input
         {...register('cardName', { required: true })}
         value={String(cardInput)}
-        onChange={e => setCardInput(e.target.value)}
+        onChange={e => {
+          setCardInput(e.target.value)
+        }}
       />
       <button type="submit">Add to URL</button>
       <hr />
       {results.length > 1 && (
-        <select onChange={({ target }) => setCardInputNow(target.value)}>
+        <select
+          onChange={({ target }) => {
+            setCardInput(target.value)
+          }}
+        >
           <option disabled value={false}>
             Did you mean...
           </option>
@@ -50,7 +61,12 @@ export function RandomCard() {
       <dl>
         <dt>Search Results</dt>
         {cards.map((card: ScryfallCard) => (
-          <dd key={card.id} onClick={() => setQueryParams({ cardId: card.id })}>
+          <dd
+            key={card.id}
+            onClick={() => {
+              setQueryParams({ cardId: card.id })
+            }}
+          >
             {card.name}
           </dd>
         ))}

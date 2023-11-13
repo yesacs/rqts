@@ -8,12 +8,12 @@ import {
 
 export const get = (req: RequestInfo | string) => async () => {
   const resp = await fetch(req)
-  return await resp.json()
+  return resp.json()
 }
 
-type SearchStr = unknown | undefined
+type SearchStr = string
 
-const SCRY_URL: string = 'https://api.scryfall.com/cards/'
+const SCRY_URL = 'https://api.scryfall.com/cards/'
 
 // factory pattern for keys makes reuse/refactoring a litte smooter
 const keys = {
@@ -39,11 +39,12 @@ const multiCardResponseToIds = ({ data }: ScryfallMultiCardResponse) =>
 // This object contains the main endpoint definitions and query behaviord for
 // Card related things
 export const CardApi = {
-  useId: (id: SearchStr) =>
+  useId: (id: string) =>
     useQuery({
       queryKey: keys.id(id),
       enabled: !!id,
       queryFn: get(`${SCRY_URL}${id}`),
+      select: (c: ScryfallCard) => c, // Selector here help TS with return type inference
     }),
   useRandom: (searchStr: SearchStr) =>
     useQuery({
@@ -68,7 +69,7 @@ export const CardApi = {
       queryFn: get(`${SCRY_URL}search?q=${searchStr}`),
       select: multiCardResponseToIds,
     }),
-  useAutocomplete: (searchStr: SearchStr, limit: number = 10) =>
+  useAutocomplete: (searchStr: SearchStr, limit = 10) =>
     useQuery({
       queryKey: keys.autoComplete(searchStr),
       enabled: !!searchStr,
@@ -82,6 +83,8 @@ export const CardApi = {
     return useMutation({
       mutationKey: keys.id(id),
       mutationFn: async (card: ScryfallCard) => {
+        await get(`${SCRY_URL}${id}`)() // just to have a promise in here
+
         localStorage.setItem(card.id, JSON.stringify(card))
 
         return card
