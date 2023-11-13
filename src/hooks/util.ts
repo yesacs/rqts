@@ -11,6 +11,7 @@ export function useDebouncedState(
   React.Dispatch<React.SetStateAction<StateValue>>,
   StateValue,
   boolean,
+  React.Dispatch<React.SetStateAction<StateValue>>
 ] {
   const [internalValue, setInternalValue] = useState(value),
     [debouncedValue, setDebouncedValue] = useState(value)
@@ -25,6 +26,7 @@ export function useDebouncedState(
     setInternalValue,
     debouncedValue,
     internalValue === debouncedValue,
+    setDebouncedValue,
   ]
 }
 

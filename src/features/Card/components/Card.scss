@@ -1,0 +1,13 @@
+.card {
+  border: 1px solid pink;
+
+  .card-img {
+    border-radius: 10px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+    height: 350px;
+    width: 250px;
+    background-size: cover;
+    background-position: center;
+    transform: rotate(5deg);
+  }
+}

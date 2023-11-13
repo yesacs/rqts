@@ -1,36 +1,69 @@
 import CardApi from '../api'
+import { useEffect, useState } from 'react'
+
 import { ScryfallCard } from '../types'
+import './Card.scss'
 
 type CardProps = {
   card: ScryfallCard
+  children?: React.ReactNode
 }
 
-export function Card({ card }: CardProps) {
-  const saveCard = CardApi.useSave()
-
+export function Card({ card, children }: CardProps) {
   return (
-    <div>
-      <a href={card?.uri}>
-        <img src={card?.image_uris?.normal} height="300px" />
-      </a>
-      <button
-        type="button"
-        onClick={() =>
-          saveCard.mutate({
-            ...card,
-            time: String(Date.now()),
-          })
-        }
-      >
-        Save
-      </button>
-    </div>
+    card && (
+      <div className="card">
+        <a href={card?.uri}>
+          <div
+            className="card-img"
+            style={{ backgroundImage: `url(${card?.image_uris?.normal})` }}
+          />
+          <em>{card?.time}</em>
+        </a>
+        {children}
+      </div>
+    )
   )
 }
 
-export function ConnectedCard({ id }: { id: string }) {
-  const { data: card } = CardApi.useId(id)
-  return !!card && <Card card={card} />
+type ConnectedCardProps = {
+  id: string
+}
+
+export function ConnectedCard({ id }: ConnectedCardProps) {
+  const { data: card } = CardApi.useId(id),
+    save = CardApi.useSave(id),
+    [newName, setNewName] = useState('')
+
+  useEffect(() => setNewName(card?.name || ''), [card?.name])
+
+  return (
+    <Card card={card}>
+      <>
+        <input
+          value={newName}
+          onChange={({ target }) => setNewName(String(target.value))}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            save.mutate(
+              {
+                ...card,
+                name: newName,
+                time: String(Date.now()),
+              },
+              {
+                onSuccess: () => setTimeout(save.reset, 2500),
+              }
+            )
+          }}
+        >
+          {save.isSuccess ? 'Saved!' : 'Save'}
+        </button>
+      </>
+    </Card>
+  )
 }
 
 export default ConnectedCard

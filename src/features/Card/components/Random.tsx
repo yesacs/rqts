@@ -13,9 +13,8 @@ interface ICardInput {
 
 export function RandomCard() {
   const [queryParams, setQueryParams] = useQueryParams(),
-    [cardInput = '', setCardInput, cardName = ''] = useDebouncedState(
-      queryParams.cardName
-    )
+    [cardInput = '', setCardInput, cardName = '', , setCardInputNow] =
+      useDebouncedState(queryParams.cardName)
 
   const { data: random } = CardApi.useRandom(cardName),
     { data: cards = [] } = CardApi.useSearch(cardName),
@@ -36,19 +35,26 @@ export function RandomCard() {
         onChange={e => setCardInput(e.target.value)}
       />
       <button type="submit">Add to URL</button>
-      <br />
-      <ul>
-        {results.map((r: string) => (
-          <li key={r}>{r}</li>
-        ))}
-      </ul>
-      <ul>
+      <hr />
+      {results.length > 1 && (
+        <select onChange={({ target }) => setCardInputNow(target.value)}>
+          <option disabled value={false}>
+            Did you mean...
+          </option>
+          {results.map((r: string) => (
+            <option key={r}>{r}</option>
+          ))}
+        </select>
+      )}
+      <hr />
+      <dl>
+        <dt>Search Results</dt>
         {cards.map((card: ScryfallCard) => (
-          <li key={card.id} onClick={() => setQueryParams({ cardId: card.id })}>
+          <dd key={card.id} onClick={() => setQueryParams({ cardId: card.id })}>
             {card.name}
-          </li>
+          </dd>
         ))}
-      </ul>
+      </dl>
       <br />
       {queryParams.cardId && <Card id={queryParams.cardId} />}
       {random && <Card id={random.id} />}

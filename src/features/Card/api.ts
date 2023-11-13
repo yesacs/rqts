@@ -1,11 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   ScryfallCard,
   ScryfallMultiCardResponse,
   ScryfallCatalog,
 } from './types'
-import axios from 'axios'
 
 export const get = (req: RequestInfo | string) => async () => {
   const resp = await fetch(req)
@@ -15,8 +14,6 @@ export const get = (req: RequestInfo | string) => async () => {
 type SearchStr = unknown | undefined
 
 const SCRY_URL: string = 'https://api.scryfall.com/cards/'
-const POSTBIN_URL: string =
-  'https://www.toptal.com/developers/postbin/1699824997346-2982120532542'
 
 // factory pattern for keys makes reuse/refactoring a litte smooter
 const keys = {
@@ -33,12 +30,14 @@ const keys = {
 
 const multiCardResponse =
   (limit: number) =>
-    ({ data }: ScryfallMultiCardResponse) =>
-      data.slice(0, Math.min(limit, data.length))
+  ({ data }: ScryfallMultiCardResponse) =>
+    data.slice(0, Math.min(limit, data.length))
 
 const multiCardResponseToIds = ({ data }: ScryfallMultiCardResponse) =>
   data.map((d: ScryfallCard) => d.id)
 
+// This object contains the main endpoint definitions and query behaviord for
+// Card related things
 export const CardApi = {
   useId: (id: SearchStr) =>
     useQuery({
@@ -77,13 +76,20 @@ export const CardApi = {
       select: (results: ScryfallCatalog) =>
         results.data.slice(0, Math.min(limit, results.total_values)),
     }),
-  useSave: () =>
-    useMutation({
-      mutationFn: (card: ScryfallCard) =>
-        axios.post(POSTBIN_URL, card, {
-          headers: { 'Access-Control-Allow-Origin': '*' },
-        }),
-    }),
+  useSave: (id: string) => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+      mutationKey: keys.id(id),
+      mutationFn: async (card: ScryfallCard) => {
+        localStorage.setItem(card.id, JSON.stringify(card))
+
+        return card
+      },
+      onSuccess: async card =>
+        await queryClient.setQueryData(keys.id(card.id), card),
+    })
+  },
 }
 
 export default CardApi
