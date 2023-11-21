@@ -4,6 +4,7 @@ import Card from './Card'
 
 import CardApi from '../api'
 import { ScryfallCard } from '../types'
+import { useState } from 'react'
 
 interface ICardInput {
   cardName: string
@@ -13,9 +14,14 @@ interface ICardInput {
 
 export function RandomCard() {
   const [queryParams, setQueryParams] = useQueryParams(),
-    [cardInput = '', setCardInput, cardName = ''] = useDebouncedState(
+    [cardInput, setCardInput, cardName] = useDebouncedState<string>(
       queryParams.cardName
-    )
+    ),
+    [test, setTest] = useState<boolean>()
+
+  test && setTest(123)
+  test && setTest(null)
+  test && setTest('123')
 
   const { data: random } = CardApi.useRandom(String(cardName)),
     { data: cards = [] } = CardApi.useSearch(String(cardName)),
@@ -72,7 +78,7 @@ export function RandomCard() {
         ))}
       </dl>
       <br />
-      {queryParams.cardId && <Card id={queryParams.cardId} />}
+      {queryParams.cardId && <Card id={String(queryParams.cardId)} />}
       {random && <Card id={random.id} />}
     </form>
   )

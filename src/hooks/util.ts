@@ -1,24 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import { SetURLSearchParams, useSearchParams } from 'react-router-dom'
+import qs from 'qs'
 
 // A custom version of useState that can debounce itself
-type StateValue = unknown | undefined
-export function useDebouncedState(
-  value?: StateValue,
-  delay: number = 500
+export function useDebouncedState<S>(
+  value?: S,
+  delay = 500
 ): [
-  StateValue,
-  React.Dispatch<React.SetStateAction<StateValue>>,
-  StateValue,
+  S,
+  React.Dispatch<React.SetStateAction<S>>,
+  S,
   boolean,
-  React.Dispatch<React.SetStateAction<StateValue>>
+  React.Dispatch<React.SetStateAction<S>>,
 ] {
   const [internalValue, setInternalValue] = useState(value),
     [debouncedValue, setDebouncedValue] = useState(value)
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(internalValue), delay)
-    return () => clearTimeout(handler)
+    const handler = setTimeout(() => {
+      setDebouncedValue(internalValue)
+    }, delay)
+    return () => {
+      clearTimeout(handler)
+    }
   }, [internalValue, delay])
 
   return [
@@ -30,19 +34,24 @@ export function useDebouncedState(
   ]
 }
 
-// a wrapper around the React-Router useSearchParams hook that returns the query params mapped and filtered by a given namespace
-type MappedQueryParam = {
-  [key: string]: string
+// a wrapper around useDeferredValue and useState
+export function useDeferredState<S>(
+  value: S
+): [S, React.Dispatch<React.SetStateAction<S>>, S] {
+  const [internalValue, setInternalValue] = useState(value),
+    deferredValue = useDeferredValue(internalValue)
+
+  return [internalValue, setInternalValue, deferredValue]
 }
-export function useQueryParams(
-  namespace?: string
-): [MappedQueryParam, SetURLSearchParams] {
+
+// a wrapper around the React-Router useSearchParams hook that returns the query params mapped and filtered by a given namespace TODO
+export function useQueryParams(): [
+  qs.ParsedQs,
+  SetURLSearchParams,
+  URLSearchParams,
+] {
   const [rawSearchParams, setQueryParams] = useSearchParams(),
-    queryParams: MappedQueryParam = {}
+    parsedParams = qs.parse(rawSearchParams.toString())
 
-  rawSearchParams.forEach((value, name) => {
-    if (!namespace || name.includes(namespace)) queryParams[name] = value
-  })
-
-  return [queryParams, setQueryParams]
+  return [parsedParams, setQueryParams, rawSearchParams]
 }

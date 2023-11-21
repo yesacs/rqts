@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react'
 import { ScryfallCard } from '../types'
 import './Card.scss'
 
+// Dumb Card
+
 interface CardProps {
   card: ScryfallCard
   children?: React.ReactNode
+  onClick: (e: React.MouseEvent<HTMLElement>) => void
 }
 
-export function Card({ card, children }: CardProps) {
+export function Card({ card, children, onClick }: CardProps) {
   return (
     <div className="card">
-      <a href={card.uri}>
+      <a href={card.uri} onClick={onClick}>
         <div
           className="card-img"
           style={{ backgroundImage: `url(${card.image_uris?.normal})` }}
@@ -24,6 +27,8 @@ export function Card({ card, children }: CardProps) {
   )
 }
 
+// Smart Card
+
 interface ConnectedCardProps {
   id: string
 }
@@ -31,7 +36,8 @@ interface ConnectedCardProps {
 export function ConnectedCard({ id }: ConnectedCardProps) {
   const { data: card } = CardApi.useId(id),
     save = CardApi.useSave(id),
-    [newName, setNewName] = useState('')
+    [newName, setNewName] = useState(''),
+    [val, setVal] = useState<number>(0)
 
   useEffect(() => {
     setNewName(card?.name ?? '')
@@ -39,7 +45,14 @@ export function ConnectedCard({ id }: ConnectedCardProps) {
 
   return (
     card && (
-      <Card card={card}>
+      <Card
+        card={card}
+        onClick={e => {
+          e.preventDefault()
+          setVal(val + 1)
+          console.log(val)
+        }}
+      >
         <>
           <input
             value={newName}

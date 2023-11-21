@@ -15,7 +15,9 @@ type SearchStr = string
 
 const SCRY_URL = 'https://api.scryfall.com/cards/'
 
-// factory pattern for keys makes reuse/refactoring a litte smooter
+// f
+// actory pattern for keys makes reuse/refactoring a litte smoother, but it
+// feels like there may be a better way to generate this
 const keys = {
   all: ['card'],
   id: (id: SearchStr) => [...keys.all, id],
