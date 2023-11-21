@@ -9,10 +9,20 @@ import './Card.scss'
 interface CardProps {
   card: ScryfallCard
   children?: React.ReactNode
-  onClick: (e: React.MouseEvent<HTMLElement>) => void
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void
+  onChange?: React.ChangeEventHandler<HTMLInputElement>
+  onSave?: (e: React.MouseEvent<HTMLElement>) => void
+  buttonLabel?: string
 }
 
-export function Card({ card, children, onClick }: CardProps) {
+export function Card({
+  card,
+  children,
+  onClick,
+  onChange,
+  onSave,
+  buttonLabel,
+}: CardProps) {
   return (
     <div className="card">
       <a href={card.uri} onClick={onClick}>
@@ -23,6 +33,10 @@ export function Card({ card, children, onClick }: CardProps) {
         <em>{card.time}</em>
       </a>
       {children}
+      <input value={card.name} onChange={onChange} />
+      <button type="button" onClick={onSave}>
+        {buttonLabel}
+      </button>
     </div>
   )
 }
@@ -36,8 +50,21 @@ interface ConnectedCardProps {
 export function ConnectedCard({ id }: ConnectedCardProps) {
   const { data: card } = CardApi.useId(id),
     save = CardApi.useSave(id),
-    [newName, setNewName] = useState(''),
-    [val, setVal] = useState<number>(0)
+    [newName, setNewName] = useState<string>(''),
+    [val, setVal] = useState<number>(0),
+    onSave = () => {
+      card &&
+        save.mutate(
+          {
+            ...card,
+            name: newName,
+            time: String(Date.now()),
+          },
+          {
+            onSuccess: () => setTimeout(save.reset, 2500),
+          }
+        )
+    }
 
   useEffect(() => {
     setNewName(card?.name ?? '')
@@ -46,39 +73,18 @@ export function ConnectedCard({ id }: ConnectedCardProps) {
   return (
     card && (
       <Card
-        card={card}
+        card={{ ...card, name: newName }}
+        onSave={onSave}
+        buttonLabel={save.isSuccess ? 'Saved!' : 'Save'}
         onClick={e => {
           e.preventDefault()
           setVal(val + 1)
           console.log(val)
         }}
-      >
-        <>
-          <input
-            value={newName}
-            onChange={({ target }) => {
-              setNewName(String(target.value))
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              save.mutate(
-                {
-                  ...card,
-                  name: newName,
-                  time: String(Date.now()),
-                },
-                {
-                  onSuccess: () => setTimeout(save.reset, 2500),
-                }
-              )
-            }}
-          >
-            {save.isSuccess ? 'Saved!' : 'Save'}
-          </button>
-        </>
-      </Card>
+        onChange={({ target }) => {
+          setNewName(String(target.value))
+        }}
+      />
     )
   )
 }
